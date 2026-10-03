@@ -199,6 +199,7 @@ async def test_daikin_brp084(aresponses, client_session):
 
     # Check basic properties
     assert device.values.get('mode') == 'cool'
+    assert device.operating_mode == "cool"
     assert device.values.get('pow') == '1'
     assert device.values.get('stemp') == '25.0'
     assert device.values.get('f_rate') == 'auto'
@@ -1412,9 +1413,18 @@ def test_safe_hex_temp_missing():
 
 
 @pytest.mark.asyncio
-async def test_update_status_dry_mode():
+@pytest.mark.parametrize(
+    "power, raw_mode, state_mode, operating_mode",
+    [
+        ("01", "0500", "dry", "dry"),
+        ("00", "0500", "off", "dry"),
+        ("00", "ffff", "off", None),
+    ],
+)
+async def test_update_status_dry_mode(power, raw_mode, state_mode, operating_mode):
     """Dry mode (no temp/fan/swing settings, no sensors) degrades gracefully."""
     device = DaikinBRP084('ip', session=MagicMock())
+    assert device.operating_mode is None
     device._get_resource = AsyncMock(
         return_value={
             "responses": [
@@ -1428,11 +1438,11 @@ async def test_update_status_dry_mode():
                                 "pch": [
                                     {
                                         "pn": "e_A002",
-                                        "pch": [{"pn": "p_01", "pv": "01"}],
+                                        "pch": [{"pn": "p_01", "pv": power}],
                                     },
                                     {
                                         "pn": "e_3001",
-                                        "pch": [{"pn": "p_01", "pv": "0500"}],
+                                        "pch": [{"pn": "p_01", "pv": raw_mode}],
                                     },
                                     {
                                         "pn": "e_A00B",
@@ -1456,10 +1466,13 @@ async def test_update_status_dry_mode():
 
     await device.update_status()
 
-    assert device.values['mode'] == 'dry'
+    assert device.values["mode"] == state_mode
+    assert device.operating_mode == operating_mode
     assert device.values['stemp'] == '--'
     assert device.values['f_rate'] == 'auto'
     assert device.values['otemp'] == '--'
+    device.values["mode"] = "hot"
+    assert device.operating_mode == operating_mode
     assert device.values['hhum'] == '--'
     assert device.values['f_dir'] == 'off'
 

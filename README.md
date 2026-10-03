@@ -52,6 +52,11 @@ if __name__ == "__main__":
 
 The `DaikinFactory` automatically detects your device type and firmware version, creating the appropriate device instance.
 
+After a status update, `device.operating_mode` exposes the stored operating mode
+independently of power, including while the unit is off. It returns `None` when
+the mode is unavailable. `device.represent("mode")` still reports `off` when
+the unit is powered off.
+
 ## Firmware Version 2.8.0 Support
 
 Firmware version 2.8.0 introduces a different API structure compared to earlier versions. PyDaikin automatically detects and handles this firmware version.

@@ -32,6 +32,7 @@ async def test_daikinSkiFi(aresponses, client_session):
     aresponses.assert_no_unused_routes()
 
     assert device["mode"] == '16'
+    assert device.operating_mode == "fan"
     assert device.support_away_mode is False
     assert device.support_fan_rate is True
     assert device.support_swing_mode is False

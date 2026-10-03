@@ -74,6 +74,13 @@ class DaikinRequest:
 class DaikinBRP084(Appliance):
     """Daikin class for BRP devices with firmware 2.8.0."""
 
+    _operating_mode: str | None = None
+
+    @property
+    def operating_mode(self) -> str | None:
+        """Return the operating mode reported independently of power."""
+        return self._operating_mode
+
     # Centralized API paths for easier maintenance and better organization
     E_1002_PATH = [
         "/dsiot/edge/adr_0100.dgc_status",
@@ -537,6 +544,7 @@ class DaikinBRP084(Appliance):
             _LOGGER.error("Error extracting values: %s", e)
             raise
 
+        self._operating_mode = self.MODE_MAP.get(mode_value)
         self._register_energy_consumption_history()
 
     def _extract_optional_readings(self, response):

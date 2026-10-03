@@ -374,6 +374,15 @@ class Appliance(DaikinPowerMixin):
             data.append(f'heat_energy={self.last_hour_heat_energy_consumption:.01f}kW')
         print('  '.join(data))
 
+    @property
+    def operating_mode(self) -> str | None:
+        """Return the stored operating mode independently of power."""
+        value = self.values.get("mode")
+        if value is None:
+            return None
+        mode = self.TRANSLATIONS.get("mode", {}).get(value)
+        return None if mode == "off" else mode
+
     def represent(self, key):
         """Return translated value from key."""
         k = self.VALUES_TRANSLATION.get(key, key)

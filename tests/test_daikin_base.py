@@ -5,6 +5,7 @@ from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web_exceptions import HTTPForbidden
 import pytest
 
+from pydaikin.daikin_airbase import DaikinAirBase
 from pydaikin.daikin_base import Appliance
 from pydaikin.daikin_brp069 import DaikinBRP069
 from pydaikin.response import parse_response
@@ -12,6 +13,26 @@ from pydaikin.response import parse_response
 from .test_init import client_session
 
 assert client_session
+
+
+@pytest.mark.parametrize(
+    "device_class, values, expected",
+    [
+        (DaikinBRP069, {"pow": "0", "mode": "3"}, "cool"),
+        (DaikinBRP069, {"pow": "1", "mode": "4"}, "hot"),
+        (DaikinBRP069, {"pow": "0", "mode": "10"}, None),
+        (DaikinBRP069, {"pow": "0"}, None),
+        (DaikinBRP069, {"pow": "0", "mode": "unknown"}, None),
+        (DaikinAirBase, {"pow": "0", "mode": "2"}, "cool"),
+        (DaikinAirBase, {"pow": "1", "mode": "1"}, "hot"),
+        (DaikinAirBase, {"pow": "0"}, None),
+    ],
+)
+def test_operating_mode(device_class, values, expected):
+    """The stored mode is readable independently of power."""
+    device = device_class("127.0.0.1", session=MagicMock())
+    device.values.update(values)
+    assert device.operating_mode == expected
 
 
 @pytest.mark.parametrize(
