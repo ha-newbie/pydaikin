@@ -183,17 +183,6 @@ async def test_daikin_brp084(aresponses, client_session):
         ),
     )
 
-    # Add another mock for the status update after setting
-    aresponses.add(
-        path_pattern="/dsiot/multireq",
-        method_pattern="POST",
-        response=aresponses.Response(
-            status=200,
-            text=json.dumps(mock_response),
-            headers={"Content-Type": "application/json"},
-        ),
-    )
-
     device = DaikinBRP084('ip', session=client_session)
     await device.init()
 
@@ -232,6 +221,7 @@ async def test_daikin_brp084(aresponses, client_session):
 
     # Test setting temperature
     await device.set({'stemp': '26.0'})
+    assert device.values.get("stemp", invalidate=False) == "26.0"
 
     aresponses.assert_all_requests_matched()
     aresponses.assert_no_unused_routes()
@@ -399,17 +389,6 @@ async def test_add_request_method(aresponses, client_session):
         response=aresponses.Response(
             status=200,
             text=json.dumps(set_response),
-            headers={"Content-Type": "application/json"},
-        ),
-    )
-
-    # Add mock for the status update after setting
-    aresponses.add(
-        path_pattern="/dsiot/multireq",
-        method_pattern="POST",
-        response=aresponses.Response(
-            status=200,
-            text=json.dumps(mock_response),
             headers={"Content-Type": "application/json"},
         ),
     )
@@ -2130,7 +2109,7 @@ async def test_set_applies_acknowledged_values(brp084_writer, settings, expected
     await brp084_writer.set(settings)
 
     brp084_writer._get_resource.assert_awaited_once()
-    brp084_writer.update_status.assert_awaited_once_with()
+    brp084_writer.update_status.assert_not_awaited()
     for key, value in expected.items():
         assert brp084_writer.values.get(key, invalidate=False) == value
     assert brp084_writer.values.get("htemp", invalidate=False) == "24.0"
